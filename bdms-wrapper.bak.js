@@ -1,0 +1,535 @@
+xmst = 'WXrI9RRXVSj-wtV3tC2JKHaAOoTOgdoU79Y3U_vwTpA-OZpPwbs_rg2RaR14p3rXq4fBwVzd-mFJub3_DmoHZDDB0tNVSMopXSfvC36g4klv9BgIf5nTS-AGYEpZ880Euu6YiLQf8K90uMZoAdbiaLYuaSQJDGlSL9Lu_tJOqeOYL5KxYe2QVVs='
+// window = global;
+// delete global;
+// delete Buffer;
+
+function watch(proxy_array) {
+    // 遍历待代理的对象名称数组
+    for (let i = 0; i < proxy_array.length; i++) {
+        // 定义 Proxy 的处理器对象（包含 get/set 陷阱）
+        const handler = `{
+            get: function(target, property, receiver) {
+                console.log(
+                    '方法：get',
+                    '    对象：${proxy_array[i]}',
+                    '    属性：', property,
+                    '    属性类型：', typeof property,
+                    '    属性值类型：', typeof target[property]
+                );
+                return target[property];
+            },
+            set: function(target, property, value, receiver) {
+                console.log(
+                    '方法：set',
+                    '    对象：${proxy_array[i]}',
+                    '    属性：', property,
+                    '    属性类型：', typeof property,
+                    '    属性值类型：', typeof target[property]
+                );
+                return Reflect.set(...arguments);
+            }
+        }`;
+        // 执行动态生成的代码，为目标对象创建 Proxy 代理（修改变量引用：proxy_array → _proxy_array）
+        eval(`
+            try {
+                // 先尝试访问原对象，验证其是否存在
+                ${proxy_array[i]};
+                // 若对象存在，为其创建 Proxy 代理并覆盖原对象
+                ${proxy_array[i]} = new Proxy(${proxy_array[i]}, ${handler});
+            } catch (e) {
+                // 若对象不存在（捕获引用错误），先初始化为空对象，再创建 Proxy 代理
+                ${proxy_array[i]} = {};
+                ${proxy_array[i]} = new Proxy(${proxy_array[i]}, ${handler});
+            }
+        `);
+    }
+}
+
+// toString 保护 和浏览器环境中的 toString 结果保持一致
+(function () {
+    "use strict";
+
+    // 缓存原生的 Function.prototype.toString 方法
+    const $toString = Function.prototype.toString;
+
+    // 定义唯一 Symbol 作为自定义 toString 结果的存储键
+    const myFunctionToStringSymbol = Symbol('toString');
+
+    // 自定义的 toString 核心实现方法
+    const myToString = function () {
+        return typeof this === 'function' && this[myFunctionToStringSymbol] || $toString.call(this);
+    };
+
+    // 封装 Object.defineProperty，用于给函数定义不可枚举的属性
+    function setNative(func, key, value) {
+        Object.defineProperty(func, key, {
+            enumerable: false,
+            configurable: true,
+            writable: true,
+            value: value
+        });
+    }
+
+    // 删除原型链上的原生 toString 方法，重新定义为自定义的 myToString
+    delete Function.prototype.toString;
+    setNative(Function.prototype, 'toString', myToString);
+
+    // 给重新定义后的 toString 方法本身，设置原生代码的标识返回值
+    setNative(
+        Function.prototype.toString,
+        myFunctionToStringSymbol,
+        'function toString() { [native code] }'
+    );
+
+    // 暴露全局方法，用于给特定函数设置「原生函数」样式的 toString 返回值
+    this.funcSetNative = (func) => {
+        setNative(
+            func,
+            myFunctionToStringSymbol,
+            `function ${func.name || ''}() { [native code] }`
+        );
+    };
+}).call(this);
+
+
+// window 对象
+window = top = self = parent = globalThis
+window.setInterval = function () { }; this.funcSetNative(window.setInterval);
+window.setTimeout = function () { }; this.funcSetNative(window.setTimeout);
+window.requestAnimationFrame = function () { }; this.funcSetNative(window.requestAnimationFrame);
+window.addEventListener = function () { }; this.funcSetNative(window.addEventListener);
+window._sdkGlueVersionMap = { sdkGlueVersion: '1.0.0.64-fix.01', bdmsVersion: '1.0.1.19-fix.01', captchaVersion: '4.0.10' }
+window.fetch = function () { }; this.funcSetNative(window.fetch);
+window.EventSource = function () { }; this.funcSetNative(window.EventSource);
+window.OfflineAudioContext = function () { }; this.funcSetNative(window.OfflineAudioContext);
+window.CanvasRenderingContext2D = function () { }; this.funcSetNative(window.CanvasRenderingContext2D);
+window.onwheelx = { _Ax: '0X21' }
+window.screen = {
+    availHeight: 1032,
+    availLeft: 0,
+    availTop: 0,
+    availWidth: 1920,
+    colorDepth: 24,
+    height: 1080,
+    isExtended: false,
+    onchange: null,
+    angle: 0,
+    onchange: null,
+    pixelDepth: 24,
+    width: 1920,
+}
+
+window.indexedDB = {}
+window.innerWidth = 1920
+window.innerHeight = 150
+window.outerWidth = 1914
+window.outerHeight = 1032
+window.screenX = 0
+window.screenY = 0
+window.pageYOffset = 0
+window.pageXOffset = 0
+
+// document 对象
+document = {
+    all: {},
+    createElement: function (tag) {
+        if (tag === 'span') return span;
+        if (tag === 'canvas') return canvas;
+        console.log('createElement::', tag);
+        return {};
+    },
+    documentElement: {},
+    createEvent: function () { },
+    addEventListener: function () { },
+};
+
+this.funcSetNative(document.createElement);
+this.funcSetNative(document.createEvent);
+this.funcSetNative(document.addEventListener);
+Object.defineProperty(document, Symbol.toStringTag, {
+    value: 'HTMLDocument',
+    configurable: true,
+    writable: true,
+})
+
+// localStorage
+// localStorage = {
+//     getItem: function () { },
+// };
+localStorage = {
+    getItem: function (key) {
+        return key === "xmst" ? xmst : null;
+    }
+};
+this.funcSetNative(localStorage.getItem);
+Object.defineProperty(localStorage, Symbol.toStringTag, {
+    value: 'LocalStorage',
+    configurable: true,
+    writable: true,
+})
+
+// sessionStorage 对象
+sessionStorage = {}
+Object.defineProperty(sessionStorage, Symbol.toStringTag, {
+    value: 'SessionStorage',
+    configurable: true,
+    writable: true,
+})
+
+// location 对象
+location = {
+    "ancestorOrigins": {},
+    "href": "https://live.douyin.com/",
+    "origin": "https://live.douyin.com",
+    "protocol": "https:",
+    "host": "live.douyin.com",
+    "hostname": "live.douyin.com",
+    "port": "",
+    "pathname": "/",
+    "search": "",
+    "hash": ""
+}
+Object.defineProperty(location, Symbol.toStringTag, {
+    value: 'Location',
+    configurable: true,
+    writable: true,
+})
+
+// navigator
+navigator = {
+    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36'
+}
+Object.defineProperty(navigator, Symbol.toStringTag, {
+    value: 'Navigator',
+    configurable: true,
+    writable: true,
+})
+
+// history 对象
+history = {}
+Object.defineProperty(history, Symbol.toStringTag, {
+    value: 'History',
+    configurable: true,
+    writable: true,
+})
+
+// screen 对象
+screen = {
+    availHeight: 1032,
+    availLeft: 0,
+    availTop: 0,
+    availWidth: 1920,
+    colorDepth: 24,
+    height: 1080,
+    isExtended: false,
+    onchange: null,
+    orientation: {
+        angle: 0,
+        type: 'landscape-primary',
+        onchange: null
+    },
+    pixelDepth: 24,
+    width: 1920
+}
+Object.defineProperty(screen, Symbol.toStringTag, {
+    value: 'Screen',
+    configurable: true,
+    writable: true,
+})
+
+// span 对象
+span = {
+    classList: {},
+}
+
+// canvas 对象
+canvas = {
+    getContext: function () { },
+}
+this.funcSetNative(canvas.getContext);
+
+
+
+/* XMLHTTPREQUEST 对象 */
+XMLHttpRequest = function XMLHttpRequest() { }; this.funcSetNative(XMLHttpRequest);
+XMLHttpRequest.prototype.send = function send() { }; this.funcSetNative(XMLHttpRequest.prototype.send);
+XMLHttpRequest.prototype.open = function open() { }; this.funcSetNative(XMLHttpRequest.prototype.open);
+
+// 为浏览器环境下的对象添加代理 将读写操作的详细信息打印下来
+// 通过日志信息，可以查看bdms.js代码到底 修改或读取 了什么信息 针对这些信息进行补全环境
+// 补全环境信息在下面
+// 缺啥补啥
+watch(['window', 'document', 'location', 'navigator', 'history', 'screen', 'localStorage', 'sessionStorage', 'span', 'canvas']);
+
+require('./bdms');
+console.log('------------------bdms loaded------------------');
+
+window.bdms.init({
+    "aid": 6383,
+    "pageId": 7571,
+    "paths": [
+        "^/webcast/",
+        "^/aweme/v1/",
+        "^/aweme/v2/",
+        "/v1/message/send",
+        "^/live/",
+        "^/captcha/",
+        "^/ecom/"
+    ],
+    "boe": false,
+    "ddrt": 8.5,
+    "ic": 8.5
+})
+
+export function getFeedBogus(url, _xmst, _userAgent) {
+    xmst = _xmst
+    userAgent = _userAgent
+    xhr = new XMLHttpRequest();
+    xhr.bdmsInvokeList = [
+        {
+            "args": ["GET", url, true],
+            func: function () { }
+        },
+        {
+            "args": ["Accept", "application/json, text/plain, */*"],
+            func: function () { }
+        }
+    ];
+    xhr.invokeList = [
+        {
+            "name": "addEventListener",
+            "args": ["load", function () { }]
+        },
+        {
+            "name": "addEventListener",
+            "args": ["error", function () { }]
+        }
+    ]
+    xhr.send(null);
+    return window.a_bogus;
+}
+
+export function getFeedBogus2(url, _xmst, _userAgent) {
+    xmst = _xmst
+    userAgent = _userAgent
+    xhr = new XMLHttpRequest();
+    xhr.bdmsInvokeList = [
+        { "args": ["GET", url, true], func: function () { } },
+        { "args": ["Accept", "application/json, text/plain, */*"], func: function () { } }
+    ];
+    xhr.invokeList = [
+        { "name": "addEventListener", "args": ["load", function () { }] },
+        { "name": "addEventListener", "args": ["error", function () { }] }
+    ]
+    xhr.send(null);
+    return [xmst, window.a_bogus];
+}
+
+function getLotteryBogus(url) {
+    xhr = new XMLHttpRequest();
+    xhr.bdmsInvokeList = [
+        {
+            "args": ["GET", url, true],
+            func: function () { }
+        },
+        {
+            "args": ["Accept", "application/json, text/plain, */*"],
+            func: function () { }
+        }
+    ];
+    xhr.invokeList = [
+        {
+            "name": "addEventListener",
+            "args": ["load", null]
+        },
+        {
+            "name": "addEventListener",
+            "args": ["error", null]
+        }
+    ]
+    xhr.send(null);
+    return window.a_bogus;
+}
+
+function getLotteryBogus2(url) {
+    xhr = new XMLHttpRequest();
+    xhr.bdmsInvokeList = [
+        {
+            "args": ["GET", url, true],
+            func: function () { }
+        },
+        {
+            "args": ["Accept", "application/json, text/plain, */*"],
+            func: function () { }
+        }
+    ];
+    xhr.invokeList = [
+        {
+            "name": "addEventListener",
+            "args": ["load", null]
+        },
+        {
+            "name": "addEventListener",
+            "args": ["error", null]
+        }
+    ]
+    xhr.send(null);
+    return [xmst, window.a_bogus];
+}
+
+//--------------------------
+// 导入内置模块：https（发送请求）、url（解析URL）
+const https = require('https');
+const url = require('url');
+
+function gogogoFeed() {
+    const baseUrl = 'https://live.douyin.com/webcast/feed/?aid=6383&app_name=douyin_web&live_id=1&device_platform=web&language=zh-CN&enter_from=link_share&cookie_enabled=true&screen_width=1470&screen_height=956&browser_language=zh-CN&browser_platform=Win32&browser_name=Chrome&browser_version=140.0.0.0&channel=channel_pc_web&request_tag_from=web&need_map=1&liveid=1&is_draw=1&inner_from_drawer=0&custom_count=8&action=load_more&action_type=loadmore&enter_source=web_homepage_hot_web_live_card&source_key=web_homepage_hot_web_live_card&a=123&b=456';
+
+    // 1. 定义原始变量（未URL编码，直接填入原始值即可）
+    const rawMsToken = xmst;
+    const rawABogus = getFeedBogus(baseUrl)
+
+    // 2. 对原始变量进行URL编码（使用Node.js内置encodeURIComponent方法）
+    const encodedMsToken = encodeURIComponent(rawMsToken);
+    const encodedABogus = encodeURIComponent(rawABogus);
+
+    // 3. 拼接完整URL（使用模板字符串嵌入编码后的变量）
+    const targetUrl = `${baseUrl}&msToken=${encodedMsToken}&a_bogus=${encodedABogus}`;
+
+    // 4. 解析拼接后的目标URL（供https.request使用）
+    const parsedUrl = url.parse(targetUrl);
+    console.log("请求的完整URL：", targetUrl);
+
+    // 5. 定义请求配置（与之前一致，无需修改）
+    const options = {
+        hostname: parsedUrl.hostname, // 域名：live.douyin.com
+        path: parsedUrl.path, // 请求路径+编码后的参数
+        method: 'GET', // 请求方法（对应curl默认的GET）
+        headers: {
+            'accept': 'application/json, text/plain, */*',
+            'accept-language': 'zh-CN,zh;q=0.9',
+            'cookie': 'live_can_add_dy_2_desktop=%221%22; bd_ticket_guard_client_data_v2=eyJyZWVfcHVibGljX2tleSI6IkJQd1RCQmk1K2RJbWx0SEdiY0hMc293SEZFWWN6aUVvbTdnTzBnNytJc0lsTWJ4ZTdyVjB3MlIxUkQ5RFhZbHFCdSthVkxnVnBZYW9CTXhxTnFrMFFRaz0iLCJyZXFfY29udGVudCI6InNlY190cyIsInJlcV9zaWduIjoidTFvVmhhejRhNmNSWlBhZ3JWT24zaWFFa3Z6WDJqZWpKVkF5V2FQQlpVVT0iLCJzZWNfdHMiOiIjZnlNU1lnODh1WFdQVFNwenJtWWdVckxNZnpjWGpSRUJRaFNTbGl5ZGF3dUEwNzMybitnWU5kNmxpZWRIIn0%3D; IsDouyinActive=true; bd_ticket_guard_client_data=eyJiZC10aWNrZXQtZ3VhcmQtdmVyc2lvbiI6MiwiYmQtdGlja2V0LWd1YXJkLWl0ZXJhdGlvbi12ZXJzaW9uIjoxLCJiZC10aWNrZXQtZ3VhcmQtcmVlLXB1YmxpYy1rZXkiOiJCUHdUQkJpNStkSW1sdEhHYmNITHNvd0hGRVljemlFb203Z08wZzcrSXNJbE1ieGU3clYwdzJSMVJEOURYWWxxQnUrYVZMZ1ZwWWFvQk14cU5xazBRUWs9IiwiYmQtdGlja2V0LWd1YXJkLXdlYi12ZXJzaW9uIjoyfQ%3D%3D; FOLLOW_LIVE_POINT_INFO=%22MS4wLjABAAAAj1YU62UJTPNJRN3pqIt8m9a5-pzvE5hs1SdYDn3cY7g%2F1769443200000%2F0%2F1769405680594%2F0%22; odin_tt=b1c658b7c2607ef90d4156be4d5973fb29e1372e1955cb8a6a7c2b20674aaf834a47ea3c59698032a2523d8c780bdd4e7582010f310dfb0e8ce6d234c84ee42c; home_can_add_dy_2_desktop=%221%22; PhoneResumeUidCacheV1=%7B%22715113092625680%22%3A%7B%22time%22%3A1769330739979%2C%22noClick%22%3A3%7D%7D; strategyABtestKey=%221769267785.854%22; stream_recommend_feed_params=%22%7B%5C%22cookie_enabled%5C%22%3Atrue%2C%5C%22screen_width%5C%22%3A1470%2C%5C%22screen_height%5C%22%3A956%2C%5C%22browser_online%5C%22%3Atrue%2C%5C%22cpu_core_num%5C%22%3A16%2C%5C%22device_memory%5C%22%3A8%2C%5C%22downlink%5C%22%3A10%2C%5C%22effective_type%5C%22%3A%5C%224g%5C%22%2C%5C%22round_trip_time%5C%22%3A50%7D%22; csrf_session_id=85d2525a05d26ccb0f3fdfe7e6c5715b; __live_version__=%221.1.4.7799%22; device_web_cpu_core=16; download_guide=%223%2F20251225%2F0%22; webcast_local_quality=null; sessionid=7e72a8f9d9b2f2b89aa79aef83aff076; fpk1=U2FsdGVkX19dGFlWluggy7NO8wgKJ7c71y7cufiRgsfQVf7Dh/0w+0c6nFtvxCRNFOId3Fg822Bcwxlj1EcCIQ==; has_avx2=null; passport_csrf_token_default=0af1c4de46eea93d295007d676ce7167; bit_env=-YAkDUE-fL7u1n0QwZXvMrDE4KmWqJVtjSPUqpl2GenfnI2HuE_rUMiGvWgRvJksXf9yoZqHO5tWN5-TQd6ue8-Wi4BG9_RilYDlqL-7p38eeaite2cSHK9ZaSE5qv9qJojVjK-4gzBHRyYHwLcUBmLBQrwWmg5NdvyvtW2Uy5fUupm71o5QuQ_wDx9TKKFLvkxZU6p8ZIj-ggZ2Urm6PrR26mhWLYCnCoFj13BxKiL95QnSn5qsubdWMd9Z-ZYb-bjzHL0ofmxxt0ujloEkJ0H7VMpbJqydoH8IbEqNqx5yMZDFfXpn-enLIUTvblldVya9cgI6l8NeraiNYOzDSqR8hagqYcSiZIe6IcC4rHhc72nfwepOo0fKgn8_bBKPeeuQYU0Pwm9KLkIbX26Z3ATPTlESxu67EgZoFsfE6GSZvGw2jIn2uUuU-tw83onC0JlTnqYQwPhDI4a30kipPwWrTm6PK5Xced7w_eszPw4HjQ2ej7sm1Ch1JevgjNKx; x-web-secsdk-uid=50d81f6e-8568-4578-a97f-bec2daf686d7; s_v_web_id=verify_mjk4k0i7_K9eIO9Wy_hEja_42te_AgFs_lmhFI5YFBIO2; sid_ucp_v1=1.0.0-KDJjN2YzNDE4ZjgzMjVhYmViOWIxMDMzNmVlYzA0ZTAzMmJiNzk2NTYKIQiQ6vDuw8yiARCXvbPLBhjvMSAMMPS6j6oGOAdA9AdIBBoCbHEiIDdlNzJhOGY5ZDliMmYyYjg5YWE3OWFlZjgzYWZmMDc2; uid_tt_ss=e9320ad42337ac7fbeb6d4d40da37d11; volume_info=%7B%22isUserMute%22%3Atrue%2C%22isMute%22%3Atrue%2C%22volume%22%3A0.5%7D; h265ErrorNum=-1; webcast_leading_total_show_times=13; live_use_vvc=%22false%22; passport_auth_mix_state=g44svmecmkigkon177839pp42f47bau4idcvaq4kumxf6uuh; sdk_source_info=7e276470716a68645a606960273f276364697660272927676c715a6d6069756077273f276364697660272927666d776a68605a607d71606b766c6a6b5a7666776c7571273f275e58272927666a6b766a69605a696c6061273f27636469766027292762696a6764695a7364776c6467696076273f275e582729277672715a646971273f2763646976602729277f6b5a666475273f2763646976602729276d6a6e5a6b6a716c273f2763646976602729276c6b6f5a7f6367273f27636469766027292771273f273c32313c3233373d3033333234272927676c715a75776a716a666a69273f2763646976602778; sid_tt=7e72a8f9d9b2f2b89aa79aef83aff076; passport_mfa_token=CjcmDz7DZYSqD87SS1DRStDMtTOc2KVNwhclpoiLXBhavJZZGlR1mwKl4per7lyIuAAFyPYYTYlcGkoKPAAAAAAAAAAAAABP3muFU8I%2B6O2WPLLshHbB0yaIA3GVzNLADdJp%2FZBvwrgZNSgdfkc0wGk1p1%2BZgrqZXhCAhoUOGPax0WwgAiIBA2FOxBI%3D; gulu_source_res=eyJwX2luIjoiMzAwMTg1OTI0YmE2Nzk0ZDZmZmFiZTAyZmUxNGZmMTQzZDdkY2NkZWNjZWQxYzRmOTkwYjVkZDgxYWQ4MTQ5ZiJ9; UIFID=05e13338fddfba3e77d97bdae5b40c997761c402860e341151ba0aeaadef0405a57b64dd940ad9ac42bd38bd241620975582fcf807b0ea06e7e7f7851b365cfb611ba4c489aafcb5a6941442b3b5479a4dd5487551b0236d59d7a75447a10d2940b40a76b697e1c9f22e79b7ea767b7d64e1894ef6568183b642ff2ed562338556ac45dbbb41d54c045d84c35bb70fb1c0da8bf9f72d4370396118f156ebe968; publish_badge_show_info=%220%2C0%2C0%2C1766582717187%22; is_dash_user=1; biz_trace_id=2725fd48; SelfTabRedDotControl=%5B%5D; hevc_supported=true; d_ticket=640c27451010830df1c8b54253fb0a8f579a1; login_time=1766582714311; webcast_paid_live_duration=%7B%227594809411727605812%22%3A5%7D; session_tlb_tag=sttt%7C20%7CfnKo-dmy8riap5rvg6_wdv_________ZUH5BgKYQTDR_l97RIPdAt0-M1XDsWXvLg8TideshNTE%3D; _bd_ticket_crypt_cookie=a511311a56cf236f439f01eab6b4e2c0; is_staff_user=false; __security_mc_1_s_sdk_sign_data_key_web_protect=36572547-4bff-b3c1; stream_player_status_params=%22%7B%5C%22is_auto_play%5C%22%3A0%2C%5C%22is_full_screen%5C%22%3A0%2C%5C%22is_full_webscreen%5C%22%3A0%2C%5C%22is_mute%5C%22%3A0%2C%5C%22is_speed%5C%22%3A1%2C%5C%22is_visible%5C%22%3A1%7D%22; passport_csrf_token=0af1c4de46eea93d295007d676ce7167; enter_pc_once=1; __security_mc_1_s_sdk_cert_key=6ca0d2e6-4b3e-adaf; ttwid=1%7CWJ6WEkAMxTM6WoZwLj7MbnXUCnFJQ6sGFbHXUCfWHzw%7C1769267791%7Cf72ed75e74019c7216a020a33a1009ead8bbec51c4dbd67876c1014dd9f69452; fpk2=a3f57bbe21c4e30379228ad7788f224d; sessionid_ss=7e72a8f9d9b2f2b89aa79aef83aff076; uid_tt=e9320ad42337ac7fbeb6d4d40da37d11; passport_assist_user=CkBLvQerdVEMkDHCGMwyKz1c0rQHfoS8ClnfjIdjWqgTRTftX3TNE1cH8Dcfpp_6a2Cw5KZjGYKvjIwq6gIuXtHMGkoKPAAAAAAAAAAAAABP3sgjZZ6i3LowKPYawFwiLTq9OpXFgw6jRGxr12sWgToK-i5RtyNma3xIbWqhKjxSVxDChYUOGImv1lQgASIBAzKlw3E%3D; sid_guard=7e72a8f9d9b2f2b89aa79aef83aff076%7C1768742551%7C5184000%7CThu%2C+19-Mar-2026+13%3A22%3A31+GMT; device_web_memory_size=8; bd_ticket_guard_client_web_domain=2; ssid_ucp_v1=1.0.0-KDJjN2YzNDE4ZjgzMjVhYmViOWIxMDMzNmVlYzA0ZTAzMmJiNzk2NTYKIQiQ6vDuw8yiARCXvbPLBhjvMSAMMPS6j6oGOAdA9AdIBBoCbHEiIDdlNzJhOGY5ZDliMmYyYjg5YWE3OWFlZjgzYWZmMDc2; FOLLOW_NUMBER_YELLOW_POINT_INFO=%22MS4wLjABAAAAj1YU62UJTPNJRN3pqIt8m9a5-pzvE5hs1SdYDn3cY7g%2F1769443200000%2F0%2F0%2F1769407434064%22; webcast_leading_last_show_time=1769328290189; n_mh=iXWh8J39AORM4OEoNCV2p7CuuQs4ZUo0v0w1Fjnpsc0; __security_mc_1_s_sdk_crypt_sdk=084ae7f4-43bf-826c; UIFID_TEMP=05e13338fddfba3e77d97bdae5b40c997761c402860e341151ba0aeaadef0405069de0d2c90c4825650aee4f4bdca52143a9d9424f90fede3c7c172c031e05bae561c467f3a771db9a1901e5926f640d; __security_server_data_status=1; my_rd=2',
+            'priority': 'u=1, i',
+            'referer': 'https://live.douyin.com/',
+            'sec-ch-ua': '"Chromium";v="140", "Not=A?Brand";v="24", "Google Chrome";v="140"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"Windows"',
+            'sec-fetch-dest': 'empty',
+            'sec-fetch-mode': 'cors',
+            'sec-fetch-site': 'same-origin',
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36'
+        }
+    };
+
+    // 6. 发送请求（与之前一致）
+    const req = https.request(options, (res) => {
+        console.log("请求成功，状态码：", res.statusCode);
+        console.log("响应头：", res.headers);
+
+        // 拼接响应数据（流式传输，需逐段收集）
+        let responseData = '';
+        res.on('data', (chunk) => {
+            responseData += chunk;
+        });
+
+        // 响应接收完成
+        res.on('end', () => {
+            try {
+                console.log(`RawResponseBody: [${responseData}]`);
+                // 解析JSON格式响应
+                const jsonData = JSON.parse(responseData);
+                console.log("响应数据（JSON格式）：");
+                const jsonString = JSON.stringify(jsonData, null, 2);
+                console.log(jsonString);
+                console.log();
+                console.log(targetUrl);
+            } catch (err) {
+                console.error("JSON解析失败，原始响应数据：", responseData);
+            }
+        });
+    });
+
+    // 监听请求错误
+    req.on('error', (e) => {
+        console.error("请求失败，错误信息：", e.message);
+    });
+
+    // 结束请求（发送请求）
+    req.end();
+}
+
+function gogogoLottery(id, rid) {
+    const baseUrl = `https://live.douyin.com/webcast/lottery/melon/lottery_info/?aid=6383&app_name=douyin_web&live_id=1&device_platform=web&language=en-US&enter_from=link_share&cookie_enabled=true&screen_width=1470&screen_height=956&browser_language=en-US&browser_platform=MacIntel&browser_name=Chrome&browser_version=143.0.0.0&room_id=${id}&query_from=1`;
+    const rawMsToken = xmst;
+    const rawABogus = getLotteryBogus(baseUrl)
+    // 2. 对原始变量进行URL编码（使用Node.js内置encodeURIComponent方法）
+    const encodedMsToken = encodeURIComponent(rawMsToken);
+    const encodedABogus = encodeURIComponent(rawABogus);
+
+    const targetUrl = `${baseUrl}&msToken=${encodedMsToken}&a_bogus=${encodedABogus}`;
+    const parsedUrl = url.parse(targetUrl);
+    console.log("请求的完整URL：", targetUrl);
+    // 定义请求配置选项，对应curl的所有参数
+    const options = {
+        hostname: parsedUrl.hostname, // 域名：live.douyin.com
+        path: parsedUrl.path, // 请求路径+编码后的参数
+        // 请求方法（curl默认GET，无需显式指定-X）
+        method: 'GET',
+        // 请求头配置，对应curl的所有-H和-b参数
+        headers: {
+            'Accept': 'application/json, text/plain, */*',
+            'Accept-Language': 'en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7',
+            'Cookie': 'UIFID_TEMP=43978cd9ea816a7d34a6416f01236307be591e58382e2d59dc373240de143c2137ae62003e728fc356f2e4717d7aa1fb7835a1c0abaf3025bb9da9b9e48a09b1177563d84ab3b0b492cd406acdf65761; hevc_supported=true; live_use_vvc=%22false%22; enter_pc_once=1; volume_info=%7B%22isUserMute%22%3Afalse%2C%22isMute%22%3Afalse%2C%22volume%22%3A0.5%7D; x-web-secsdk-uid=51ed2f80-dbb3-4d1f-8fab-e9382b6d11b2; has_avx2=null; device_web_cpu_core=10; device_web_memory_size=8; csrf_session_id=03ad5839135f9cb3ac034ae4360bdd5c; fpk1=U2FsdGVkX19sVjfGrWRaGm1no/yD2xopimkdU5xhDI91UP5nZCBRHNiMryMMCLNDInJvLRM8ErXEmxzJjkH36A==; fpk2=684fac3d8e595845640e507a9122bd55; h265ErrorNum=-1; webcast_local_quality=sd; s_v_web_id=verify_mkcpb7rx_IzrQO4gD_rKPt_4arL_9zVz_Y1qeSGnebZYs; bd_ticket_guard_client_web_domain=2; passport_csrf_token=25d68ac912e5a40d82ad1d97e2b03a58; passport_csrf_token_default=25d68ac912e5a40d82ad1d97e2b03a58; is_staff_user=false; __security_server_data_status=1; publish_badge_show_info=%220%2C0%2C0%2C1768316363952%22; __live_version__=%221.1.4.7280%22; webcast_leading_last_show_time=1768457676887; webcast_leading_total_show_times=2; record_force_login=%7B%22timestamp%22%3A1768533216510%2C%22force_login_video%22%3A0%2C%22force_login_live%22%3A3%2C%22force_login_direct_video%22%3A0%7D; ttwid=1%7CMaxWpFa3fYxkJf_qd3EawcUbbrxtYc2qTu1WHIBBhlQ%7C1768533803%7C5206f272cc6ca3bf93a4c306f9c440df9536d378c1a918aff745c8a787d910e5; passport_mfa_token=CjUzdEjDR189M05Z2tL5uHS0HUekx0nTrZtLPR6a080r9B9GJESs2f4treoy1F83j1RC07eiXRpKCjwAAAAAAAAAAAAAT%2FQ6kW9Q2CpymYYn5oV50znp5Qiycr8Y8cD4JAawqtj23o5mA3neVNxBpRnuxUxaY9cQ%2FoOHDhj2sdFsIAIiAQP1Dg7X; d_ticket=365b0f5a2467a0eaae245cf9188f4283f2bbf; passport_assist_user=CjwfycC92DndLDv6EyWz_0dZNDmUvZLMikVH-KuSFSvSl7DvejswiWPDRlGFG-5AaJYJI3pvQlzkf_nKI_waSgo8AAAAAAAAAAAAAE_1kwf80DuI6O79HGos9auPfGODrObkg7jOdkZiNF857vEn1ZCBYHzER6ouAKOnFrfEEM6Fhw4Yia_WVCABIgEDvonV3A%3D%3D; n_mh=Zy7utKFYgZy2uIZChFz-j7oJgBBv4G1nm_Y7x8Bkz_g; sid_guard=2b42ebe0065d2061a32f6db88100af2f%7C1768533842%7C5183999%7CTue%2C+17-Mar-2026+03%3A24%3A01+GMT; uid_tt=253cee4842f6f885ae09754828605da3; uid_tt_ss=253cee4842f6f885ae09754828605da3; sid_tt=2b42ebe0065d2061a32f6db88100af2f; sessionid=2b42ebe0065d2061a32f6db88100af2f; sessionid_ss=2b42ebe0065d2061a32f6db88100af2f; session_tlb_tag=sttt%7C6%7CK0Lr4AZdIGGjL224gQCvL_________-qqAtf4Tb0XzVX7MKU05b0bbhLx30976IIWQXyT3O-54s%3D; sid_ucp_v1=1.0.0-KGY2NzQ1MzkxMTc0ODhkYTc4MzA3MDA1YmExM2VmZmM5ZWZlOGFiMGMKHwj9nfGcwgEQ0t6mywYY7zEgDDCAr4rBBTgHQPQHSAQaAmhsIiAyYjQyZWJlMDA2NWQyMDYxYTMyZjZkYjg4MTAwYWYyZg; ssid_ucp_v1=1.0.0-KGY2NzQ1MzkxMTc0ODhkYTc4MzA3MDA1YmExM2VmZmM5ZWZlOGFiMGMKHwj9nfGcwgEQ0t6mywYY7zEgDDCAr4rBBTgHQPQHSAQaAmhsIiAyYjQyZWJlMDA2NWQyMDYxYTMyZjZkYjg4MTAwYWYyZg; _bd_ticket_crypt_cookie=eee1fd4ae57b9e0bd7a49e5d2369b89b; __security_mc_1_s_sdk_sign_data_key_web_protect=c621bb5d-4d13-844f; __security_mc_1_s_sdk_cert_key=46e433ad-40d9-b29c; __security_mc_1_s_sdk_crypt_sdk=c6a003e4-4d5d-b729; login_time=1768533842083; SelfTabRedDotControl=%5B%7B%22id%22%3A%227315707654188304399%22%2C%22u%22%3A80%2C%22c%22%3A0%7D%2C%7B%22id%22%3A%226752346327771777035%22%2C%22u%22%3A164%2C%22c%22%3A0%7D%5D; FOLLOW_LIVE_POINT_INFO=%22MS4wLjABAAAAhv7i9y39IKBsOQnBs54fPPlxYSUhFsNx1Xl5XOZCXRk%2F1768579200000%2F0%2F0%2F1768534661441%22; FOLLOW_NUMBER_YELLOW_POINT_INFO=%22MS4wLjABAAAAhv7i9y39IKBsOQnBs54fPPlxYSUhFsNx1Xl5XOZCXRk%2F1768579200000%2F0%2F1768534061441%2F0%22; PhoneResumeUidCacheV1=%7B%22715113092625680%22%3A%7B%22time%22%3A1768318055958%2C%22noClick%22%3A1%7D%2C%2252137053949%22%3A%7B%22time%22%3A1768534053809%2C%22noClick%22%3A1%7D%7D; download_guide=%223%2F20260112%2F1%22; odin_tt=1c3f5b5a95c45b634d38669fa092e3c32e2f1a1e665e0b41acc9284a82a58abd87a763cbfd92c1b8161b2807e3bcf561c4c773c740402441382c70853bb33e5f6239d0ce183ef34d10ad0b27e26fb342; sdk_source_info=7e276470716a68645a606960273f276364697660272927676c715a6d6069756077273f276364697660272927666d776a68605a607d71606b766c6a6b5a7666776c7571273f275e58272927666a6b766a69605a696c6061273f27636469766027292762696a6764695a7364776c6467696076273f275e5827292771273f273533333036303431303d3332342778; bit_env=Ytq3_spxJjxaekqYnYp_TclllTad4Qo32uMZKqGLK6qJuKYyDxWVmQ8HL12xb99W4zybh2WBEBcTx027SKbHsJksHqRjh62ps0a8a2eTU4f5kjGdmBUy5bSymJiBIgF8i-9oYsoJ3Myqfqhmm_RBOgxPJTUZBRIi7PqxlQ-LDFgN5XiPmAfBx6jIOwXaoqBlLGzfxj4kH8UKe9QktXqqC6oPpmy6iahw7dA8ysHXqhK1x_P7jIPHXSfk4F3pSVBNUrSMAyBs8qo5a54v885xPJBhU9789qhh2BnkUGcQOlcuxVBfdw3LBPkXDVN7rwIsRGwGxprdy8hCTcsGDP9T-J1soNeG4DhTD-_qhsgoYQd2inSgp1LZZbWF51VNuXbw4pSnHafZtk9or9_-F28DYoMYRq2yzwcLxGBsQnllTURua3Qsd1tkEV7PK6DYtNUBxtRdzB70LYQSJ_OFXtBcxUkw-8nIt8yo94xfqu9CtRbi3WW1_AH9nNvK4C0QLCdwxoJXQgQXJ1VsbVxHkxqpdhI0kxtS0W0Ml5mAaHismKs%3D; gulu_source_res=eyJwX2luIjoiNGQyZWY5YTQ5ZWRjMWRkODFjNjhhNDYzMTkwZDk5YzJlMTJhY2U4OTdjODg1Yzc5M2YzYTE0ODE0ZDQ1NGJkNSJ9; passport_auth_mix_state=yppwhh1f0xbpe91ohh9yvdob50c8bm5724a2i5cfxx2cusuy; biz_trace_id=282a1300; bd_ticket_guard_client_data_v2=eyJyZWVfcHVibGljX2tleSI6IkJJKzVTRG81Y3E1SUNrRWJVMWZWNnlXemhxaE1GbmFYVXRKTXhKSUxrYzJmcHRmMnVhOVNBYUdqOTRNT0R1WHdvYXl3Mkc2aVNZcXdNMXZpK2FjVXlUUT0iLCJ0c19zaWduIjoidHMuMi43MjdiYjY5NjRmMGMwZmJhMTQxZGM1MmJiNTE5NjA0YjJkODE3MTY1ZWQxOWUxYmNhZDNmYzA4NWYzZjk2YmQ4YzRmYmU4N2QyMzE5Y2YwNTMxODYyNGNlZGExNDkxMWNhNDA2ZGVkYmViZWRkYjJlMzBmY2U4ZDRmYTAyNTc1ZCIsInJlcV9jb250ZW50Ijoic2VjX3RzIiwicmVxX3NpZ24iOiIxS3ZaN3VFYldSVExnZU1qV25MQnhvbzB2T3dUbi9NRWQ2T3oyOFE1cVRNPSIsInNlY190cyI6IiNTSG5vOHlCM1oya0gwRW0xdmlCbWVIdUt0VW5NUTc1SE13dytNRUd0TlduU1ZmYkxsMC9VRDBJeENBbk4ifQ%3D%3D; IsDouyinActive=false; live_can_add_dy_2_desktop=%220%22; bd_ticket_guard_client_data=eyJiZC10aWNrZXQtZ3VhcmQtdmVyc2lvbiI6MiwiYmQtdGlja2V0LWd1YXJkLWl0ZXJhdGlvbi12ZXJzaW9uIjoxLCJiZC10aWNrZXQtZ3VhcmQtcmVlLXB1YmxpYy1rZXkiOiJCSSs1U0RvNWNxNUlDa0ViVTFmVjZ5V3pocWhNRm5hWFV0Sk14SklMa2MyZnB0ZjJ1YTlTQWFHajk0TU9EdVh3b2F5dzJHNmlTWXF3TTF2aSthY1V5VFE9IiwiYmQtdGlja2V0LWd1YXJkLXdlYi12ZXJzaW9uIjoyfQ%3D%3D',
+            'Priority': 'u=1, i',
+            'Referer': `https://live.douyin.com/${rid}`,
+            'Sec-Ch-Ua': '"Google Chrome";v="143", "Chromium";v="143", "Not A(Brand";v="24"',
+            'Sec-Ch-Ua-Mobile': '?0',
+            'Sec-Ch-Ua-Platform': '"macOS"',
+            'Sec-Fetch-Dest': 'empty',
+            'Sec-Fetch-Mode': 'cors',
+            'Sec-Fetch-Site': 'same-origin',
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36'
+        }
+    };
+
+    // 发起HTTPS请求
+    const req = https.request(options, (res) => {
+        // 声明变量收集响应数据（流式传输，需分段拼接）
+        let responseData = '';
+
+        // 监听数据接收事件，分段收集数据
+        res.on('data', (chunk) => {
+            responseData += chunk;
+        });
+
+        // 监听响应结束事件，处理完整响应数据
+        res.on('end', () => {
+            console.log('请求状态码:', res.statusCode);
+            console.log('响应头:', res.headers);
+            try {
+                // 解析JSON格式响应（接口返回application/json）
+                const result = JSON.parse(responseData);
+                console.log('响应数据（格式化）:', JSON.stringify(result, null, 2));
+            } catch (err) {
+                // 非JSON格式数据直接打印
+                console.log('响应数据（原始）:', responseData);
+            }
+        });
+    });
+
+    // 监听请求错误事件
+    req.on('error', (e) => {
+        console.error('请求失败:', e.message);
+    });
+
+    // 结束请求（GET请求无需发送请求体，end()表示请求完成）
+    req.end();
+}
+
+gogogoFeed();
+
+// id = '7595838810605325082';
+// rid = '22965356023';
+// gogogoLottery(id, rid);
+
+
